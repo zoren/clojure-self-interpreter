@@ -66,7 +66,8 @@
                       {:form form :reference reference :this this})))))
 
 (def tests
-  '[5 "" :kw () not-found true false nil
+  '["" 5 5.0 5.00M \a \" true false nil :kw
+    not-found ()
     (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
     (do) (do 4) (do 4 5)
     (let*) (let* [x]) (let* [4 4] 5) (let* []) (let* [x 5] 6) (let* [x 5] 1 2 3)  (let* [x 5 y x] y)
