@@ -34,6 +34,8 @@
                                      (meval' (nth form 3)))
                 (< (count form) 3) (throw-context "Too few arguments to if")
                 :else (throw-context "Too many arguments to if"))
+              "do"
+              (last (map meval' (rest form)))
               (throw-context "case not supported"))))))))
 
 (defn lift-value [value]
@@ -55,6 +57,7 @@
   (def tests
     '[5 "" :kw () not-found
       (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
+      (do) (do 4) (do 4 5)
       ])
   (doseq [f tests] (run-compare f))
   )
