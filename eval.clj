@@ -49,19 +49,19 @@
   ([form] (test-eval {} form))
   ([context form] (meval (into {} (map (fn [[k v]] [k (lift-value v)]) context)) form)))
 
+(defn run-compare [form]
+  (let [check
+        #(try {:value (% form)} (catch Exception e (select-keys (Throwable->map e) [:cause])))
+        reference (check eval)
+        this (check test-eval)]
+    (if (not= reference this)
+      (throw (ex-info "Difference between reference and this implementation"
+                      {:form form :reference reference :this this})))))
+
 (comment
-  (test-eval '5)
-  (test-eval '"")
-  (test-eval ':h)
-  (test-eval '())
-  (test-eval 'not-found)
-  (test-eval '{x 45} 'x)
-  (test-eval '(if))
-  (test-eval '(if nil))
-  (test-eval '(if false 1 2 3))
-  (test-eval '(if false 1 2))
-  (test-eval '(if nil 1 2))
-  (test-eval '(if true 1 2))
-  (test-eval '(if true 1))
-  (test-eval '(if false 1))
+  (def tests
+    '[5 "" :kw () not-found
+      (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
+      ])
+  (doseq [f tests] (run-compare f))
   )
