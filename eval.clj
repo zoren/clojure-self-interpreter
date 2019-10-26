@@ -13,14 +13,31 @@
 
 (defn meval
   [context form]
-  (if (symbol? form)
-    (let [value (get context form :not-found)]
-      (if (= :not-found value)
-        (throw (ex-info (str "Unable to resolve symbol: " (name form) " in this context") {:context context :form form})))
-      (first value))
-    (if (constant? form)
-      {:constant form}
-      (throw (ex-info "case not supported" {:context context :form form})))))
+  (letfn [(throw-context [message]
+            (throw (ex-info message {:context context :form form})))
+          (meval' [form] (meval context form))]
+    (if (symbol? form)
+      (let [value (get context form :not-found)]
+        (if (= :not-found value)
+          (throw-context (str "Unable to resolve symbol: " (name form) " in this context")))
+        (:constant value))
+      (if (constant? form)
+        form
+        (if (list? form)
+          (if (empty? form)
+            '()
+            (case (first form)
+              'if
+              (cond
+                (= (count form) 3) (if (meval' (nth form 1))
+                                     (meval' (nth form 2)))
+                (= (count form) 4) (if (meval' (nth form 1))
+                                     (meval' (nth form 2))
+                                     (meval' (nth form 3)))
+                (< (count form) 3) (throw-context "Too few arguments to if")
+                (> (count form) 4) (throw-context "Too many arguments to if")
+                :else (throw-context "should not happen"))
+              (throw-context "case not supported"))))))))
 
 (defn lift-value [value]
   (let [evalue (eval value)]
@@ -36,6 +53,15 @@
   (test-eval '5)
   (test-eval '"")
   (test-eval ':h)
+  (test-eval '())
   (test-eval 'not-found)
   (test-eval '{x 45} 'x)
+  (test-eval '(if))
+  (test-eval '(if nil))
+  (test-eval '(if false 1 2 3))
+  (test-eval '(if false 1 2))
+  (test-eval '(if nil 1 2))
+  (test-eval '(if true 1 2))
+  (test-eval '(if true 1))
+  (test-eval '(if false 1))
   )
