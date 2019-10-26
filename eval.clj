@@ -1,6 +1,4 @@
-;; Strings, numbers, characters, true, false, nil and keywords evaluate to themselves.
 ;; https://clojure.org/reference/evaluation
-;;An empty list () evaluates to an empty list.
 
 ;; Strings, numbers, characters, true, false, nil and keywords evaluate to themselves.
 (defn constant? [value]
@@ -35,8 +33,7 @@
                                      (meval' (nth form 2))
                                      (meval' (nth form 3)))
                 (< (count form) 3) (throw-context "Too few arguments to if")
-                (> (count form) 4) (throw-context "Too many arguments to if")
-                :else (throw-context "should not happen"))
+                :else (throw-context "Too many arguments to if"))
               (throw-context "case not supported"))))))))
 
 (defn lift-value [value]
