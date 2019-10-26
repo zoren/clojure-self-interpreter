@@ -45,15 +45,11 @@
       {:constant evalue}
       (throw (ex-info "value could not be lifted" {:value evalue})))))
 
-(defn test-eval
-  ([form] (test-eval {} form))
-  ([context form] (meval (into {} (map (fn [[k v]] [k (lift-value v)]) context)) form)))
-
 (defn run-compare [form]
   (let [check
         #(try {:value (% form)} (catch Exception e (select-keys (Throwable->map e) [:cause])))
         reference (check eval)
-        this (check test-eval)]
+        this (check (partial meval {}))]
     (if (not= reference this)
       (throw (ex-info "Difference between reference and this implementation"
                       {:form form :reference reference :this this})))))
