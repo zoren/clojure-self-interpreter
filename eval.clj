@@ -24,8 +24,8 @@
         (if (list? form)
           (if (empty? form)
             '()
-            (case (first form)
-              'if
+            (case (name (first form))
+              "if"
               (cond
                 (= (count form) 3) (if (meval' (nth form 1))
                                      (meval' (nth form 2)))
