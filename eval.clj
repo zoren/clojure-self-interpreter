@@ -45,7 +45,8 @@
                 (let* [bindings (partition 2 (nth form 1))
                        context'
                        (reduce (fn [acc pair]
-                                 (if-not (symbol? (first pair)) (throw-context (str "Bad binding form, expected symbol, got: " (first pair))))
+                                 (if-not (symbol? (first pair))
+                                   (throw-context (str "Bad binding form, expected symbol, got: " (first pair))))
                                  (assoc acc (first pair) {:constant (meval acc (second pair))})) context bindings)]
                   (last (map (partial meval context') (rest form)))))
               (throw-context "case not supported"))))))))
