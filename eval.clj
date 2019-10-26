@@ -14,42 +14,45 @@
   (letfn [(throw-context [message]
             (throw (ex-info message {:context context :form form})))
           (meval' [form] (meval context form))]
-    (if (symbol? form)
+    (cond
+      (constant? form)
+      form
+
+      (symbol? form)
       (let [value (get context form :not-found)]
         (if (= :not-found value)
           (throw-context (str "Unable to resolve symbol: " (name form) " in this context")))
         (:constant value))
-      (if (constant? form)
-        form
-        (if (list? form)
-          (if (empty? form)
-            '()
-            (case (name (first form))
-              "if"
-              (cond
-                (= (count form) 3) (if (meval' (nth form 1))
-                                     (meval' (nth form 2)))
-                (= (count form) 4) (if (meval' (nth form 1))
-                                     (meval' (nth form 2))
-                                     (meval' (nth form 3)))
-                (< (count form) 3) (throw-context "Too few arguments to if")
-                :else (throw-context "Too many arguments to if"))
-              "do"
-              (last (map meval' (rest form)))
-              "let*"
-              (do
-                (if-not (vector? (nth form 1 nil))
-                  (throw-context "Bad binding form, expected vector"))
-                (if (odd? (count (nth form 1)))
-                  (throw-context "Bad binding form, expected matched symbol expression pairs"))
-                (let* [bindings (partition 2 (nth form 1))
-                       context'
-                       (reduce (fn [acc pair]
-                                 (if-not (symbol? (first pair))
-                                   (throw-context (str "Bad binding form, expected symbol, got: " (first pair))))
-                                 (assoc acc (first pair) {:constant (meval acc (second pair))})) context bindings)]
-                  (last (map (partial meval context') (rest form)))))
-              (throw-context "case not supported"))))))))
+
+      (list? form)
+      (if (empty? form)
+        '()
+        (case (name (first form))
+          "if"
+          (cond
+            (= (count form) 3) (if (meval' (nth form 1))
+                                 (meval' (nth form 2)))
+            (= (count form) 4) (if (meval' (nth form 1))
+                                 (meval' (nth form 2))
+                                 (meval' (nth form 3)))
+            (< (count form) 3) (throw-context "Too few arguments to if")
+            :else (throw-context "Too many arguments to if"))
+          "do"
+          (last (map meval' (rest form)))
+          "let*"
+          (do
+            (if-not (vector? (nth form 1 nil))
+              (throw-context "Bad binding form, expected vector"))
+            (if (odd? (count (nth form 1)))
+              (throw-context "Bad binding form, expected matched symbol expression pairs"))
+            (let* [bindings (partition 2 (nth form 1))
+                   context'
+                   (reduce (fn [acc pair]
+                             (if-not (symbol? (first pair))
+                               (throw-context (str "Bad binding form, expected symbol, got: " (first pair))))
+                             (assoc acc (first pair) {:constant (meval acc (second pair))})) context bindings)]
+              (last (map (partial meval context') (rest form)))))
+          (throw-context "case not supported"))))))
 
 (defn lift-value [value]
   (let [evalue (eval value)]
