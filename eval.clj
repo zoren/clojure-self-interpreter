@@ -53,26 +53,18 @@
                              (assoc acc (first pair) {:constant (meval acc (second pair))})) context bindings)]
               (last (map (partial meval context') (rest form)))))
           "fn*"
-          (cond
-            (vector? (nth form 1 nil))
-            (do
-              (if-not (every? symbol? (nth form 1 nil)) (throw-context "fn params must be Symbols"))
-              {:fn {(count (nth form 1))
-                    (rest form) }})
-            (every? list? (rest form))
-            {:fn
-             (reduce
-              (fn [acc body]
-                (if-not (or (empty? body) (list? body)) (throw-context nil))
-                (let [params (first body)]
-                  (if-not (vector? params) (throw-context nil))
-                  (if-not (every? symbol? params) (throw-context "fn params must be Symbols"))
-                  (if (acc (count params)) (throw-context "Can't have 2 overloads with same arity"))
-                  (assoc acc (count params) body)))
-              {}
-              (rest form))}
-            :else
-            (throw-context (str (.getName (type (nth form 1 nil))) " cannot be cast to clojure.lang.ISeq")))
+          (let
+              [arity-folder
+               (fn [acc body]
+                 (if-not (or (empty? body) (list? body)) (throw-context nil))
+                 (let [params (first body)]
+                   (if-not (vector? params) (throw-context (str (.getName (type (nth form 1 nil))) " cannot be cast to clojure.lang.ISeq")))
+                   (if-not (every? symbol? params) (throw-context "fn params must be Symbols"))
+                   (if (acc (count params)) (throw-context "Can't have 2 overloads with same arity"))
+                   (assoc acc (count params) body)))]
+            {:fn (try (arity-folder {} (rest form))
+                      (catch Throwable _t
+                        (reduce arity-folder {} (rest form))))})
           (throw-context "case not supported"))))))
 
 (defn lift-value [value]
@@ -82,6 +74,23 @@
       (throw (ex-info "value could not be lifted" {:value evalue})))))
 
 (defn run-compare [form]
+  (let [check
+        #(try {:value (% form)} (catch Throwable e {:cause (:cause (Throwable->map e))}))
+        reference (check eval)
+        this (check (partial meval {}))]
+    (if (not= reference this)
+      (throw (ex-info "Difference between reference and this implementation" {:form form :reference reference :this this})))))
+
+(def tests
+  '["" 5 5.0 5.00M \a \" true false nil :kw
+    not-found ()
+    (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
+    (do) (do 4) (do 4 5)
+    (let*) (let* [x]) (let* [4 4] 5) (let* []) (let* [x 5] 6) (let* [x 5] 1 2 3)  (let* [x 5 y x] y)
+    ])
+(doseq [f tests] (run-compare f))
+
+(defn run-compare-no-cause-compare [form]
   (let [check
         #(try {:value (% form)} (catch Throwable e {:cause (:cause (Throwable->map e))}))
         reference (check eval)
@@ -96,19 +105,15 @@
           (throw-compare "Difference between reference and this implementation")))
 
       (and (contains? reference :cause) (contains? this :cause))
-      (if (not= (reference :cause) (this :cause))
-        (throw-compare "Difference between reference and this implementation: exception"))
+      nil
       :else
       (throw-compare "Difference between reference and this implementation"))))
 
-(def tests
-  '["" 5 5.0 5.00M \a \" true false nil :kw
-    not-found ()
-    (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
-    (do) (do 4) (do 4 5)
-    (let*) (let* [x]) (let* [4 4] 5) (let* []) (let* [x 5] 6) (let* [x 5] 1 2 3)  (let* [x 5 y x] y)
-    (fn* {}) (fn* 3) (fn* [3]) (fn* ())
+;; eval gives poor exception cause messages for fn* syntax errors so let's not copy those
+(def fn*-tests
+  '[(fn* {}) (fn* 3) (fn* "") (fn* [3]) (fn* ())
     (fn*) (fn* [x]) (fn* [x] x) (fn* [x] 5 x)
-    (fn* ([]) ([])) (fn* ([x]) ([x]))
+    (fn* ({})) (fn* ([]) ([])) (fn* ([x]) ([x]))
+    (fn* ([x] 1) ([x y] 2))
     ])
-(doseq [f tests] (run-compare f))
+(doseq [f fn*-tests] (run-compare-no-cause-compare f))
