@@ -66,7 +66,7 @@
                              (if-not (symbol? (first pair))
                                (throw-context (str "Bad binding form, expected symbol, got: " (first pair))))
                              (assoc acc (first pair) {:constant (meval acc (second pair))})) context bindings)]
-              (last (map (partial meval context') (rest form)))))
+              (last (map (partial meval context') (drop 2 form)))))
           "fn*"
           (let
               [arity-folder
