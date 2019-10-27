@@ -80,7 +80,9 @@
             {:fn (try (arity-folder {} (rest form))
                       (catch Throwable _t
                         (reduce arity-folder {} (rest form))))})
-          (throw-context "case not supported"))))))
+          (throw-context "case not supported")))
+      :else
+      (throw-context "case not supported"))))
 
 (defn lift-value [value]
   (let [evalue (eval value)]
