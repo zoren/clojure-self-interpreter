@@ -24,6 +24,21 @@
           (throw-context (str "Unable to resolve symbol: " (name form) " in this context")))
         (:constant value))
 
+      (vector? form)
+      (mapv meval' form)
+
+      (map? form)
+      (reduce (fn [acc kv]
+                (let [[k v] (mapv meval' kv)]
+                  (if (contains? acc k) (throw-context (str "Duplicate key: " k)))
+                  (assoc acc k v))) {} form)
+
+      (set? form)
+      (reduce (fn [acc e]
+                (let [elem (meval' e)]
+                  (if (contains? acc elem) (throw-context (str "Duplicate key: " elem)))
+                  (conj acc elem))) #{} form)
+
       (list? form)
       (if (empty? form)
         '()
@@ -84,6 +99,9 @@
 (def tests
   '["" 5 5.0 5.00M \a \" true false nil :kw
     not-found ()
+    [] [(if true 1)] [1 3 4]
+    {} {1 (if true 1) (if true 1) 1} {:k 2 :v 5}
+    #{} #{1 (if true 1)}
     (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
     (do) (do 4) (do 4 5)
     (let*) (let* [x]) (let* [4 4] 5) (let* []) (let* [x 5] 6) (let* [x 5] 1 2 3)  (let* [x 5 y x] y)
