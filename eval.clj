@@ -57,15 +57,16 @@
         (fn [_context] '())
         (case (name (first form))
           "if"
-          (cond
-            (= (count form) 3)
+          (case (count form)
+            3
             (let [[ec et] (map meval (rest form))]
               #(if (ec %) (et %)))
-            (= (count form) 4)
+            4
             (let [[ec et ef] (map meval (rest form))]
               #(if (ec %) (et %) (ef %)))
-            (< (count form) 3) (throw-syntax "Too few arguments to if")
-            :else (throw-syntax "Too many arguments to if"))
+            (if (< (count form) 3)
+              (throw-syntax "Too few arguments to if")
+              (throw-syntax "Too many arguments to if")))
 
           "do"
           (let [ces (map meval (rest form))]
