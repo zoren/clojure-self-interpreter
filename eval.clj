@@ -135,5 +135,6 @@
     (fn*) (fn* [x]) (fn* [x] x) (fn* [x] 5 x)
     (fn* ({})) (fn* ([]) ([])) (fn* ([x]) ([x]))
     (fn* ([x] 1) ([x y] 2))
+    (fn* [] (if))
     ])
 (doseq [f fn*-tests] (run-compare-no-cause-compare f))
