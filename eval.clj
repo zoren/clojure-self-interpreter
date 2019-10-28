@@ -103,7 +103,7 @@
     not-found ()
     [] [(if true 1)] [1 3 4]
     {} {1 (if true 1) (if true 1) 1} {:k 2 :v 5}
-    #{} #{1 (if true 1)}
+    #{} #{1 (if true 1)} #{1 2 3}
     (if) (if nil) (if 0 1 2 3) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
     (do) (do 4) (do 4 5)
     (let*) (let* [x]) (let* [4 4] 5) (let* []) (let* [x 5] 6) (let* [x 5] 1 2 3)  (let* [x 5 y x] y)
