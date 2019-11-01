@@ -30,17 +30,6 @@
       (let [eelem (mapv meval form)]
         (fn [context] (mapv #(% context) eelem)))
 
-      (map? form)
-      (let [eelem (mapv (fn [[k v]] (mapv meval [k v])) form)]
-        (fn [context]
-          (reduce
-           (fn [acc kv]
-             (let [[k v] (mapv #(% context) kv)]
-               (if (contains? acc k) (throw-context context (str "Duplicate key: " k)))
-               (assoc acc k v)))
-           {}
-           eelem)))
-
       (set? form)
       (let [eelem (mapv meval form)]
         (fn [context]
@@ -50,6 +39,17 @@
                (if (contains? acc elem) (throw-context context (str "Duplicate key: " elem)))
                (conj acc elem)))
            #{}
+           eelem)))
+
+      (map? form)
+      (let [eelem (mapv (fn [[k v]] (mapv meval [k v])) form)]
+        (fn [context]
+          (reduce
+           (fn [acc kv]
+             (let [[k v] (mapv #(% context) kv)]
+               (if (contains? acc k) (throw-context context (str "Duplicate key: " k)))
+               (assoc acc k v)))
+           {}
            eelem)))
 
       (list? form)
@@ -137,8 +137,8 @@
   '["" 5 5.0 5.00M \a \" true false nil :kw
     not-found
     [] [(if true 1)] [1 3 4]
-    {} {1 (if true 1) (if true 1) 1} {:k 2 :v 5}
     #{} #{1 (if true 1)} #{1 2 3}
+    {} {1 (if true 1) (if true 1) 1} {:k 2 :v 5}
     ()
     (if) (if nil) (if 0 1 2 3) (if false (if)) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
     (do) (do 4) (do 4 5) (do (if) 5)
