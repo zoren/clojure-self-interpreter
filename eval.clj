@@ -155,7 +155,8 @@
                      (let [cbody (mapv meval (rest body))]
                        (assoc acc (count params)
                               {:params params
-                               :f (fn [context] (last (map #(% context) cbody)))}
+                               :f (fn [context] (let [evs (map-meval context cbody)]
+                                                  (if (exception? evs) evs (wrap (last evs)))))}
                               ))))
                  m (try
                      (arity-folder {} (rest form))
@@ -256,6 +257,8 @@
     (fn* [x] x)
     (let* [f (fn* [x] x)] f)
     ((fn* [x] x) (/ 1 0))
+                                        ;    ((fn* [& c]))  ((fn* [& c]) 3)  ((fn* [& c]) 3 3)
+    ((fn* [] (/ 1 0) 0))
     ])
 (doseq [f fn*-tests] (run-compare-no-cause-compare f))
 
