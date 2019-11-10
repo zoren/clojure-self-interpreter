@@ -28,15 +28,6 @@
           (throw-syntax [message]
             (throw (ex-info message {:form form})))
           (map-meval [context cexps]
-            (loop [in cexps
-                   acc []]
-              (if (empty? in)
-                (wrap acc)
-                (let [v ((first in) context)]
-                  (if (exception? v)
-                    v
-                    (recur (rest in) (conj acc (unwrap v))))))))
-          (map-meval [context cexps]
             (reduce (fn [acc fin]
                       (let [v (fin context)]
                         (if (exception? v)
