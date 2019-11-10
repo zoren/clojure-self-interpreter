@@ -92,16 +92,13 @@
           (wrap-if-not
            (reduce
             (fn [acc kv]
-              (let [[k v] (mapv #(% context) kv)]
-                (cond
-                  (exception? k)
-                  (reduced k)
-                  (exception? v)
-                  (reduced v)
-                  (contains? acc (unwrap k))
-                  (reduced (throw-context context (str "Duplicate key: " (unwrap k))))
-                  :else
-                  (assoc acc (unwrap k) (unwrap v)))))
+              (let [ekv (map-meval context kv)]
+                (if (exception? ekv)
+                  ekv
+                  (let [[k v] ekv]
+                    (if (contains? acc k)
+                      (reduced (throw-context context (str "Duplicate key: " k)))
+                      (assoc acc k v))))))
             {}
             eelem))))
 
