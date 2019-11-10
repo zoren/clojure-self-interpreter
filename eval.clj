@@ -270,7 +270,4 @@
   ;;  https://stackoverflow.com/a/30947787
   (def java-spec (into #{} (keys (. clojure.lang.Compiler specials))))
   (clojure.set/intersection js-spec java-spec)
-  ;; (def a (atom 0))
-  ;; (defn inca [] (swap! a inc))
-  ;; #{(inca) (inca)} ;; Duplicate key: (inca)
   )
