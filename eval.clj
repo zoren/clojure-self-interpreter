@@ -210,7 +210,7 @@
   '["" 5 5.0 5.00M \a \" true false nil :kw
     not-found
     [] [(if true 1)] [1 3 4] [not-found] [1 (if true 1)]
-    #{} #{1 (if true 1)} #{1 2 3} ;; #{1 (if true 1) (if)}
+    #{} #{1 (if true 1)} #{1 2 3} #{1 (if true 1) (if)}
     {} {1 (if true 1) (if true 1) 1} {:k 2 :v 5} {not-found 3} {5 not-found}
     ()
     (if) (if nil) (if 0 1 2 3) (if false (if)) (if false 1 2) (if nil 1 2) (if true 1 2) (if true 1) (if false 1)
