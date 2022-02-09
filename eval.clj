@@ -116,13 +116,13 @@
 
             "let*"
             (do
-              (if-not (vector? (nth form 1 nil))
+              (when-not (vector? (nth form 1 nil))
                 (throw-syntax "Bad binding form, expected vector"))
-              (if (odd? (count (nth form 1)))
+              (when (odd? (count (nth form 1)))
                 (throw-syntax "Bad binding form, expected matched symbol expression pairs"))
               (let [cbindings
                     (mapv (fn [[bname bexp]]
-                            (if-not (symbol? bname)
+                            (when-not (symbol? bname)
                               (throw-syntax (str "Bad binding form, expected symbol, got: " bname)))
                             [bname (meval bexp)]
                             ) (partition 2 (nth form 1)))
@@ -137,9 +137,9 @@
                 [arity-folder
                  (fn [acc body]
                    (let [params (first body)]
-                     (if-not (vector? params) (throw-syntax (str body params " cannot be cast to clojure.lang.ISeq")))
-                     (if-not (every? symbol? params) (throw-syntax "fn params must be Symbols"))
-                     (if (acc (count params)) (throw-syntax "Can't have 2 overloads with same arity"))
+                     (when-not (vector? params) (throw-syntax (str body params " cannot be cast to clojure.lang.ISeq")))
+                     (when-not (every? symbol? params) (throw-syntax "fn params must be Symbols"))
+                     (when (acc (count params)) (throw-syntax "Can't have 2 overloads with same arity"))
                      (let [cbody (mapv meval (rest body))]
                        (assoc acc (count params)
                               {:params params
@@ -153,7 +153,7 @@
               (fn [context] {:fn m :context context}))
 
             (do
-              (if (special-symbol? (first form))
+              (when (special-symbol? (first form))
                 (throw-syntax "special case not supported"))
               (apply-func form)))
           ;; list does not start with symbol
@@ -175,7 +175,7 @@
              (catch Throwable e {:cause (:cause (Throwable->map e))}))]
     (if (fn? eval-form)
       (let [v (eval-form {})]
-        (if-not (map? v) (throw (ex-info "cannot" {:form form :v v})))
+        (when-not (map? v) (throw (ex-info "cannot" {:form form :v v})))
         (cond
           (contains? v :value) v
           (contains? v :fn) v
@@ -190,7 +190,7 @@
               (catch Throwable e {:cause (:cause (Throwable->map e))}))
         reference (check eval)
         this (run-this form)]
-    (if (not= reference this)
+    (when-not (= reference this)
       (throw (ex-info "Difference between reference and this implementation"
                       {:form form :reference reference :this this})))))
 
@@ -220,9 +220,9 @@
       (and (contains? reference :value)
            (or (contains? this :value) (contains? this :fn)))
       (if (fn? (reference :value))
-        (if-not (contains? this :fn)
+        (when-not (contains? this :fn)
           (throw-compare "Difference between reference and this implementation: function"))
-        (if (not= reference this)
+        (when (not= reference this)
           (throw-compare "Difference between reference and this implementation")))
 
       (and (contains? reference :cause) (contains? this :cause))
