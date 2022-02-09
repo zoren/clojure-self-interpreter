@@ -253,8 +253,13 @@
 (comment
   ;; from cljs (source special-symbol?)
   (def js-spec
-    '#{if def fn* do let* loop* letfn* throw try catch finally
-       recur new set! ns deftype* defrecord* . js* & quote var})
+    '#{if do let* fn*
+       def
+       throw try catch finally
+       loop* recur
+       letfn*
+       quote var
+       new set! ns deftype* defrecord* . js* &})
   ;;  https://stackoverflow.com/a/30947787
   (def java-spec (into #{} (keys (. clojure.lang.Compiler specials))))
   (clojure.set/intersection js-spec java-spec)
